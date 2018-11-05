@@ -2,16 +2,20 @@
 
 namespace AppBundle\Entity;
 
+use AppBundle\Entity\Interfaces\TaskInterface;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity
- * @ORM\Table
+ * @ORM\Table("p8_task")
  */
-class Task
+class Task implements TaskInterface
 {
     /**
+     * @var int
+     *
      * @ORM\Column(type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
@@ -19,75 +23,118 @@ class Task
     private $id;
 
     /**
+     * @var DateTime
+     *
      * @ORM\Column(type="datetime")
      */
     private $createdAt;
 
     /**
+     * @var string
+     *
      * @ORM\Column(type="string")
+     *
      * @Assert\NotBlank(message="Vous devez saisir un titre.")
      */
     private $title;
 
     /**
+     * @var string
+     *
      * @ORM\Column(type="text")
+     *
      * @Assert\NotBlank(message="Vous devez saisir du contenu.")
      */
     private $content;
 
     /**
+     * @var bool
+     *
      * @ORM\Column(type="boolean")
      */
-    private $isDone;
+    private $done;
 
     public function __construct()
     {
-        $this->createdAt = new \Datetime();
-        $this->isDone = false;
+        $this->createdAt = new Datetime();
+        $this->done = false;
     }
 
-    public function getId()
+    /**
+     * @return int
+     */
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getCreatedAt()
+    /**
+     * @return DateTime
+     */
+    public function getCreatedAt(): DateTime
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt($createdAt)
-    {
-        $this->createdAt = $createdAt;
-    }
-
-    public function getTitle()
+    /**
+     * @return string
+     */
+    public function getTitle(): string
     {
         return $this->title;
     }
 
-    public function setTitle($title)
-    {
-        $this->title = $title;
-    }
-
-    public function getContent()
+    /**
+     * @return string
+     */
+    public function getContent(): string
     {
         return $this->content;
     }
 
-    public function setContent($content)
+    /**
+     * @return bool
+     */
+    public function isDone(): bool
+    {
+        return $this->done;
+    }
+
+    /**
+     * @param string $content
+     *
+     * @return void
+     */
+    public function setContent(string $content): void
     {
         $this->content = $content;
     }
 
-    public function isDone()
+    /**
+     * @param string $title
+     *
+     * @return void
+     */
+    public function setTitle(string $title): void
     {
-        return $this->isDone;
+        $this->title = $title;
     }
 
-    public function toggle($flag)
+    /**
+     * @param DateTime $createdAt
+     *
+     * @return void
+     */
+    public function setCreatedAt(DateTime $createdAt): void
     {
-        $this->isDone = $flag;
+        $this->createdAt = $createdAt;
+    }
+
+    /**
+     * @return void
+     */
+    public function toggle(): void
+    {
+        $this->done = !$this->done;
     }
 }
