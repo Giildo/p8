@@ -9,6 +9,11 @@ services:
     autoconfigure: true
     public: false
 
+  form.authenticator:
+    class: AppBundle\Helpers\Authenticator\FormAuthenticator
+    public: true
+    arguments: ["@security.user_password_encoder.generic"]
+
   user_builder:
     class: AppBundle\Entity\Builders\UserBuilder
     public: true
