@@ -4,12 +4,11 @@ namespace AppBundle\Entity;
 
 use AppBundle\Entity\Interfaces\UserInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Table("p8_user")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\UserRepository")
  * @UniqueEntity("email")
  */
 class User implements UserInterface
@@ -27,8 +26,6 @@ class User implements UserInterface
      * @var string
      *
      * @ORM\Column(type="string", length=25, unique=true)
-     *
-     * @Assert\NotBlank(message="Vous devez saisir un nom d'utilisateur.")
      */
     private $username;
 
@@ -44,34 +41,29 @@ class User implements UserInterface
      *
      * @ORM\Column(type="array")
      */
-    private $roles;
+    private $roles = [];
 
     /**
      * @var string
      *
      * @ORM\Column(type="string", length=60, unique=true)
-     *
-     * @Assert\NotBlank(message="Vous devez saisir une adresse email.")
-     * @Assert\Email(message="Le format de l'adresse n'est pas correcte.")
      */
     private $email;
 
     /**
      * User constructor.
+     *
      * @param string $username
-     * @param string $password
-     * @param array $roles
+     * @param string $roles
      * @param string $email
      */
     public function __construct(
         string $username,
-        string $password,
-        array $roles,
+        string $roles,
         string $email
     ) {
         $this->username = $username;
-        $this->password = $password;
-        $this->roles = $roles;
+        $this->roles[] = $roles;
         $this->email = $email;
     }
 
@@ -129,7 +121,7 @@ class User implements UserInterface
      *
      * @return void
      */
-    public function setPassword($password): void
+    public function setPassword(string $password): void
     {
         $this->password = $password;
     }
@@ -139,7 +131,7 @@ class User implements UserInterface
      *
      * @return void
      */
-    public function setUsername($username): void
+    public function setUsername(string $username): void
     {
         $this->username = $username;
     }
@@ -149,9 +141,19 @@ class User implements UserInterface
      *
      * @return void
      */
-    public function setEmail($email): void
+    public function setEmail(string $email): void
     {
         $this->email = $email;
+    }
+
+    /**
+     * @param array $roles
+     *
+     * @return void
+     */
+    public function setRoles(array $roles): void
+    {
+        $this->roles = $roles;
     }
 
     /**

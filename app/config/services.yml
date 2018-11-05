@@ -4,6 +4,16 @@ parameters:
 #    parameter_name: value
 
 services:
-#    service_name:
-#        class: AppBundle\Directory\ClassName
-#        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  user_builder:
+    class: AppBundle\Entity\Builders\UserBuilder
+    public: true
+    arguments: ["@security.user_password_encoder.generic"]
+
+  task_builder:
+    class: AppBundle\Entity\Builders\TaskBuilder
+    public: true

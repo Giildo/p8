@@ -2,43 +2,37 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Form\ConnectionType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Response;
 
 class SecurityController extends Controller
 {
     /**
-     * @Route("/login", name="login")
+     * @Route(
+     *     path="/login",
+     *     name="login"
+     * )
+     *
+     * @return Response
      */
-    public function loginAction()
+    public function loginAction(): Response
     {
         $authenticationUtils = $this->get('security.authentication_utils');
 
         $error = $authenticationUtils->getLastAuthenticationError();
         $lastUsername = $authenticationUtils->getLastUsername();
 
+        $form = $this->createForm(ConnectionType::class);
+
         return $this->render(
-            'security/login.html.twig', array(
-            'last_username' => $lastUsername,
-            'error'         => $error,
-            )
+            'security/login.html.twig',
+            [
+                'last_username' => $lastUsername,
+                'error'         => $error,
+                'form'          => $form->createView(),
+            ]
         );
-    }
-
-    /**
-     * @Route("/login_check", name="login_check")
-     */
-    public function loginCheck()
-    {
-        // This code is never executed.
-    }
-
-    /**
-     * @Route("/logout", name="logout")
-     */
-    public function logoutCheck()
-    {
-        // This code is never executed.
     }
 }
