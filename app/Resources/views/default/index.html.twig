@@ -5,6 +5,11 @@
 {% endblock %}
 
 {% block body %}
+    {% for message in app.flashes('accessDenied') %}
+        <div class="alert alert-danger" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
 
     <div class="row">
         <a href="{{ path('task_create') }}" class="btn btn-success">Créer une nouvelle tâche</a>
