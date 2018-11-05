@@ -21,19 +21,26 @@ interface UserInterface extends UserInterfaceSecurity
      *
      * @return void
      */
-    public function setPassword($password): void;
+    public function setPassword(string $password): void;
 
     /**
      * @param $username
      *
      * @return void
      */
-    public function setUsername($username): void;
+    public function setUsername(string $username): void;
 
     /**
      * @param $email
      *
      * @return void
      */
-    public function setEmail($email): void;
+    public function setEmail(string $email): void;
+
+    /**
+     * @param array $roles
+     *
+     * @return void
+     */
+    public function setRoles(array $roles): void;
 }

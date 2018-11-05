@@ -2,38 +2,65 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\Builders\UserBuilder;
+use AppBundle\Entity\DTO\RegistrationDTO;
 use AppBundle\Entity\User;
-use AppBundle\Form\UserType;
+use AppBundle\Form\RegistrationType;
+use Doctrine\ORM\NonUniqueResultException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
     /**
-     * @Route("/users", name="user_list")
+     * @Route(
+     *     path="/users",
+     *     name="user_list"
+     * )
+     *
+     * @return Response
      */
-    public function listAction()
+    public function listAction(): Response
     {
-        return $this->render('user/list.html.twig', ['users' => $this->getDoctrine()->getRepository('AppBundle:User')->findAll()]);
+        return $this->render(
+            'user/list.html.twig',
+            [
+                'users' => $this->getDoctrine()
+                                ->getRepository('AppBundle:User')
+                                ->findAll()
+            ]
+        );
     }
 
     /**
-     * @Route("/users/create", name="user_create")
+     * @Route(
+     *     path="/users/create",
+     *     name="user_create"
+     * )
+     *
+     * @param Request $request
+     *
+     * @return Response
      */
-    public function createAction(Request $request)
+    public function createAction(Request $request): Response
     {
-        $user = new User();
-        $form = $this->createForm(UserType::class, $user);
+        $form = $this->createForm(RegistrationType::class)
+                     ->handleRequest($request);
 
-        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em = $this->getDoctrine()
+                       ->getManager();
 
-        if ($form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $password = $this->get('security.password_encoder')->encodePassword($user, $user->getPassword());
-            $user->setPassword($password);
+            /** @var RegistrationDTO $datas */
+            $datas = $form->getData();
 
-            $em->persist($user);
+            $em->persist(
+                $this->container->get('user_builder')
+                                ->build($datas)
+                                ->getUser()
+            );
             $em->flush();
 
             $this->addFlash('success', "L'utilisateur a bien été ajouté.");
@@ -45,25 +72,59 @@ class UserController extends Controller
     }
 
     /**
-     * @Route("/users/{id}/edit", name="user_edit")
+     * @Route(
+     *     path="/users/{id}/edit",
+     *     name="user_edit"
+     * )
+     *
+     * @param int $id
+     * @param Request $request
+     *
+     * @return Response
+     *
+     * @throws NonUniqueResultException
      */
-    public function editAction(User $user, Request $request)
-    {
-        $form = $this->createForm(UserType::class, $user);
+    public function editAction(
+        int $id,
+        Request $request
+    ): Response {
+        $user = $this->getDoctrine()
+                     ->getRepository(User::class)
+                     ->findUserById($id);
 
+        $form = $this->createForm(
+            RegistrationType::class,
+            new RegistrationDTO(
+                $user->getUsername(),
+                $user->getPassword(),
+                $user->getRoles()[0],
+                $user->getEmail()
+            )
+        );
         $form->handleRequest($request);
 
-        if ($form->isValid()) {
-            $password = $this->get('security.password_encoder')->encodePassword($user, $user->getPassword());
-            $user->setPassword($password);
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var RegistrationDTO $datas */
+            $datas = $form->getData();
 
-            $this->getDoctrine()->getManager()->flush();
+            $this->get('user_builder')
+                 ->build($datas, $user);
+
+            $this->getDoctrine()
+                 ->getManager()
+                 ->flush();
 
             $this->addFlash('success', "L'utilisateur a bien été modifié");
 
             return $this->redirectToRoute('user_list');
         }
 
-        return $this->render('user/edit.html.twig', ['form' => $form->createView(), 'user' => $user]);
+        return $this->render(
+            'user/edit.html.twig',
+            [
+                'form' => $form->createView(),
+                'user' => $user
+            ]
+        );
     }
 }

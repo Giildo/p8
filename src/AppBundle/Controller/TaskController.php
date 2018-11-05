@@ -2,36 +2,62 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\DTO\TaskDTO;
 use AppBundle\Entity\Task;
 use AppBundle\Form\TaskType;
+use Doctrine\ORM\NonUniqueResultException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class TaskController extends Controller
 {
     /**
-     * @Route("/tasks", name="task_list")
+     * @Route(
+     *     path="/tasks",
+     *     name="task_list"
+     * )
+     *
+     * @return Response
      */
-    public function listAction()
+    public function listAction(): Response
     {
-        return $this->render('task/list.html.twig', ['tasks' => $this->getDoctrine()->getRepository('AppBundle:Task')->findAll()]);
+        return $this->render(
+            'task/list.html.twig',
+            [
+                'tasks' => $this->getDoctrine()
+                                ->getRepository(Task::class)
+                                ->findAllTasks(),
+            ]
+        );
     }
 
     /**
-     * @Route("/tasks/create", name="task_create")
+     * @Route(
+     *     path="/tasks/create",
+     *     name="task_create"
+     * )
+     * @param Request $request
+     *
+     * @return Response
      */
-    public function createAction(Request $request)
+    public function createAction(Request $request): Response
     {
-        $task = new Task();
-        $form = $this->createForm(TaskType::class, $task);
+        $form = $this->createForm(TaskType::class)
+                     ->handleRequest($request);
 
-        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em = $this->getDoctrine()
+                       ->getManager();
+            /** @var TaskDTO $datas */
+            $datas = $form->getData();
 
-        if ($form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-
-            $em->persist($task);
+            $em->persist(
+                $this->get('task_builder')
+                     ->build($datas)
+                     ->getTask()
+            );
             $em->flush();
 
             $this->addFlash('success', 'La tâche a été bien été ajoutée.');
@@ -39,20 +65,54 @@ class TaskController extends Controller
             return $this->redirectToRoute('task_list');
         }
 
-        return $this->render('task/create.html.twig', ['form' => $form->createView()]);
+        return $this->render(
+            'task/create.html.twig',
+            [
+                'form' => $form->createView()
+            ]
+        );
     }
 
     /**
-     * @Route("/tasks/{id}/edit", name="task_edit")
+     * @Route(
+     *     path="/tasks/{id}/edit",
+     *     name="task_edit"
+     * )
+     *
+     * @param int $id
+     * @param Request $request
+     *
+     * @return Response
+     *
+     * @throws NonUniqueResultException
      */
-    public function editAction(Task $task, Request $request)
-    {
-        $form = $this->createForm(TaskType::class, $task);
+    public function editAction(
+        int $id,
+        Request $request
+    ): Response {
+        $task = $this->getDoctrine()
+                     ->getRepository(Task::class)
+                     ->findOneTaskById($id);
 
+        $form = $this->createForm(
+            TaskType::class,
+            new TaskDTO(
+                $task->getTitle(),
+                $task->getContent()
+            )
+        );
         $form->handleRequest($request);
 
-        if ($form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var TaskDTO $datas */
+            $datas = $form->getData();
+
+            $this->get('task_builder')
+                 ->build($datas, $task);
+
+            $this->getDoctrine()
+                 ->getManager()
+                 ->flush();
 
             $this->addFlash('success', 'La tâche a bien été modifiée.');
 
@@ -60,32 +120,75 @@ class TaskController extends Controller
         }
 
         return $this->render(
-            'task/edit.html.twig', [
-            'form' => $form->createView(),
-            'task' => $task,
+            'task/edit.html.twig',
+            [
+                'form' => $form->createView(),
+                'task' => $task,
             ]
         );
     }
 
     /**
-     * @Route("/tasks/{id}/toggle", name="task_toggle")
+     * @Route(
+     *     path="/tasks/{id}/toggle",
+     *     name="task_toggle"
+     * )
+     *
+     * @param int $id
+     *
+     * @return Response
+     *
+     * @throws NonUniqueResultException
      */
-    public function toggleTaskAction(Task $task)
+    public function toggleTaskAction(int $id): Response
     {
+        $task = $this->getDoctrine()
+                     ->getRepository(Task::class)
+                     ->findOneTaskById($id);
         $task->toggle();
-        $this->getDoctrine()->getManager()->flush();
 
-        $this->addFlash('success', sprintf('La tâche %s a bien été marquée comme faite.', $task->getTitle()));
+        $this->getDoctrine()
+             ->getManager()
+             ->flush();
+
+        $message = 'non terminée';
+
+        if ($task->isDone()) {
+            $message = 'terminée';
+        }
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'La tâche "%1$s" a bien été marquée comme %2$s.',
+                $task->getTitle(),
+                $message
+            )
+        );
 
         return $this->redirectToRoute('task_list');
     }
 
     /**
-     * @Route("/tasks/{id}/delete", name="task_delete")
+     * @Route(
+     *     path="/tasks/{id}/delete",
+     *     name="task_delete"
+     * )
+     *
+     * @param int $id
+     *
+     * @return Response
+     *
+     * @throws NonUniqueResultException
      */
-    public function deleteTaskAction(Task $task)
+    public function deleteTaskAction(int $id): Response
     {
-        $em = $this->getDoctrine()->getManager();
+        $task = $this->getDoctrine()
+                     ->getRepository(Task::class)
+                     ->findOneTaskById($id);
+
+        $em = $this->getDoctrine()
+                   ->getManager();
         $em->remove($task);
         $em->flush();
 

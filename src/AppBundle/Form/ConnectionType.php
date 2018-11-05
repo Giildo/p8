@@ -2,49 +2,56 @@
 
 namespace AppBundle\Form;
 
-use AppBundle\Entity\DTO\Interfaces\TaskDTOInterface;
-use AppBundle\Entity\DTO\TaskDTO;
+use AppBundle\Entity\DTO\ConnectionDTO;
+use AppBundle\Entity\DTO\Interfaces\ConnectionDTOInterface;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class TaskType extends AbstractType
+class ConnectionType extends AbstractType
 {
+    /**
+     * @param FormBuilderInterface $builder
+     * @param array $options
+     */
     public function buildForm(
         FormBuilderInterface $builder,
         array $options
     ) {
         $builder
             ->add(
-                'title',
+                'username',
                 TextType::class,
                 [
                     'required' => false,
-                    'label'    => 'Titre',
+                    'label'    => 'Nom d\'utilisateur',
                 ]
             )
             ->add(
-                'content',
-                TextareaType::class,
+                'password',
+                PasswordType::class,
                 [
                     'required' => false,
-                    'label'    => 'Contenu',
+                    'label'    => 'Mot de passe',
                 ]
             );
     }
 
+    /**
+     * @param OptionsResolver $resolver
+     */
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(
             [
-                'data_class' => TaskDTOInterface::class,
+                'data_class' => ConnectionDTOInterface::class,
                 'empty_data' => function (FormInterface $form) {
-                    return new TaskDTO(
-                        $form->get('title')->getData(),
-                        $form->get('content')->getData()
+                    return new ConnectionDTO(
+                        $form->get('username')->getData(),
+                        $form->get('password')->getData()
                     );
                 },
             ]

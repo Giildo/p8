@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\TaskRepository")
  * @ORM\Table("p8_task")
  */
 class Task implements TaskInterface
@@ -54,10 +54,14 @@ class Task implements TaskInterface
      */
     private $done;
 
-    public function __construct()
-    {
+    public function __construct(
+        string $title,
+        string $content
+    ) {
         $this->createdAt = new Datetime();
         $this->done = false;
+        $this->title = $title;
+        $this->content = $content;
     }
 
     /**

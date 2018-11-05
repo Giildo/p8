@@ -4,10 +4,6 @@ namespace AppBundle\Entity\Interfaces;
 
 use DateTime;
 
-/**
- * @ORM\Entity
- * @ORM\Table
- */
 interface TaskInterface
 {
     /**
