@@ -9,8 +9,13 @@ services:
     autoconfigure: true
     public: false
 
+  access.denied:
+    class: AppBundle\Helpers\Security\AccessDeniedHandler
+    public: true
+    arguments: ["@session.flash_bag"]
+
   form.authenticator:
-    class: AppBundle\Helpers\Authenticator\FormAuthenticator
+    class: AppBundle\Helpers\Security\FormAuthenticator
     public: true
     arguments: ["@security.user_password_encoder.generic"]
 

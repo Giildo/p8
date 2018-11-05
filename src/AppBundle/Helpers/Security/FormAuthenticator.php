@@ -1,6 +1,6 @@
 <?php
 
-namespace AppBundle\Helpers\Authenticator;
+namespace AppBundle\Helpers\Security;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
