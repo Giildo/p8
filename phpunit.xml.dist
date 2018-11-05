@@ -22,6 +22,7 @@
         <whitelist>
             <directory>src</directory>
             <exclude>
+                <file>src/AppBundle/AppBundle.php</file>
                 <directory>src/*Bundle/Resources</directory>
                 <directory>src/*/*Bundle/Resources</directory>
                 <directory>src/*/Bundle/*Bundle/Resources</directory>

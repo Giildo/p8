@@ -59,10 +59,12 @@ class TaskController extends Controller
             return $this->redirectToRoute('task_list');
         }
 
-        return $this->render('task/edit.html.twig', [
+        return $this->render(
+            'task/edit.html.twig', [
             'form' => $form->createView(),
             'task' => $task,
-        ]);
+            ]
+        );
     }
 
     /**
