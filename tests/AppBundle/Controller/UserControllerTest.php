@@ -25,10 +25,14 @@ class UserControllerTest extends KernelTestCase
                                 ->get('doctrine.orm.entity_manager');
 
         $schemaTool = new SchemaTool($entityManager);
-        $schemaTool->dropSchema($entityManager->getMetadataFactory()
-                                              ->getAllMetadata());
-        $schemaTool->createSchema($entityManager->getMetadataFactory()
-                                                ->getAllMetadata());
+        $schemaTool->dropSchema(
+            $entityManager->getMetadataFactory()
+                          ->getAllMetadata()
+        );
+        $schemaTool->createSchema(
+            $entityManager->getMetadataFactory()
+                          ->getAllMetadata()
+        );
 
         $user = new User(
             'JohnDoe',
@@ -39,7 +43,8 @@ class UserControllerTest extends KernelTestCase
 
         $task = new Task(
             'Titre',
-            'Contenu'
+            'Contenu',
+            $user
         );
 
         $entityManager->persist($user);
@@ -72,7 +77,10 @@ class UserControllerTest extends KernelTestCase
     {
         self::assertInstanceOf(
             Response::class,
-            $this->userController->editAction(1, new Request())
+            $this->userController->editAction(
+                1,
+                new Request()
+            )
         );
     }
 }

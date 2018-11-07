@@ -1,7 +1,7 @@
 @task
 @task_edit
 
-Feature: As an connected user, I need to able edit a task.
+Feature: As an connected user, I need to able create a task.
 
   Scenario: [Fail] The User is redirected if he isn't connected.
     Given I am on "/tasks/create"

@@ -27,6 +27,11 @@ interface TaskInterface
     public function getContent(): string;
 
     /**
+     * @return UserInterface
+     */
+    public function getUser(): UserInterface;
+
+    /**
      * @return bool
      */
     public function isDone(): bool;
