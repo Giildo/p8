@@ -43,30 +43,33 @@
 
         {% if app.user %}
             <a href="{{ path('logout') }}" class="pull-right btn btn-danger">Se déconnecter</a>
-        {% endif %}
-
-        {% if not app.user and 'login' != app.request.attributes.get('_route') %}
+        {% else %}
             <a href="{{ path('login') }}" class="btn btn-success">Se connecter</a>
         {% endif %}
     </div>
 
     <div class="row">
         <div class="col-md-12">
-            {% for flash_message in app.session.flashBag.get('success') %}
-                <div class="alert alert-success" role="alert">
-                    <strong>Superbe !</strong> {{ flash_message }}
-                </div>
-            {% endfor %}
+            {% if app.session is not null %}
+                {% for flash_message in app.session.flashBag.get('success') %}
+                    <div class="alert alert-success" role="alert">
+                        <strong>Superbe !</strong> {{ flash_message }}
+                    </div>
+                {% endfor %}
 
-            {% for flash_message in app.session.flashBag.get('error') %}
-                <div class="alert alert-danger" role="alert">
-                    <strong>Oops !</strong> {{ flash_message }}
-                </div>
-            {% endfor %}
+                {% for flash_message in app.session.flashBag.get('error') %}
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Oops !</strong> {{ flash_message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
 
             {% block header_title %}{% endblock %}
-            {% block header_img %}<img class="slide-image" src="{{ asset('img/todolist_homepage.jpg') }}"
-                                       alt="todo list">{% endblock %}
+            {% block header_img %}
+                <img class="slide-image"
+                     src="{{ asset('img/todolist_homepage.jpg') }}"
+                     alt="todo list">
+            {% endblock %}
         </div>
     </div>
 

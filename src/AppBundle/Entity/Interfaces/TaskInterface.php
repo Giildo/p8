@@ -46,13 +46,6 @@ interface TaskInterface
     public function setTitle(string $title): void;
 
     /**
-     * @param DateTime $createdAt
-     *
-     * @return void
-     */
-    public function setCreatedAt(DateTime $createdAt): void;
-
-    /**
      * @return void
      */
     public function toggle(): void;

@@ -125,16 +125,6 @@ class Task implements TaskInterface
     }
 
     /**
-     * @param DateTime $createdAt
-     *
-     * @return void
-     */
-    public function setCreatedAt(DateTime $createdAt): void
-    {
-        $this->createdAt = $createdAt;
-    }
-
-    /**
      * @return void
      */
     public function toggle(): void

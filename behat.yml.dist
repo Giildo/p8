@@ -1,0 +1,14 @@
+default:
+    suites:
+        default:
+            contexts:
+                - DoctrineContext :
+                    entityManager : '@doctrine.orm.entity_manager'
+                    passwordEncoder : '@security.password_encoder'
+
+    extensions:
+        Behat\Symfony2Extension: ~
+        Behat\MinkExtension:
+            sessions:
+                default:
+                    symfony2: ~

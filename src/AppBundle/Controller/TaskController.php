@@ -8,6 +8,7 @@ use AppBundle\Form\TaskType;
 use Doctrine\ORM\NonUniqueResultException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -93,6 +94,10 @@ class TaskController extends Controller
         $task = $this->getDoctrine()
                      ->getRepository(Task::class)
                      ->findOneTaskById($id);
+
+        if (is_null($task)) {
+            return new RedirectResponse('/tasks');
+        }
 
         $form = $this->createForm(
             TaskType::class,
