@@ -39,8 +39,7 @@ class DoctrineContext extends MinkContext implements Context
     public function __construct(
         EntityManagerInterface $entityManager,
         UserPasswordEncoderInterface $passwordEncoder
-    )
-    {
+    ) {
         $this->entityManager = $entityManager;
         $this->passwordEncoder = $passwordEncoder;
     }
@@ -52,20 +51,32 @@ class DoctrineContext extends MinkContext implements Context
     public function initDatabase()
     {
         $schemaTool = new SchemaTool($this->entityManager);
-        $schemaTool->dropSchema($this->entityManager->getMetadataFactory()
-                                                    ->getAllMetadata());
-        $schemaTool->createSchema($this->entityManager->getMetadataFactory()
-                                                      ->getAllMetadata());
+        $schemaTool->dropSchema(
+            $this->entityManager->getMetadataFactory()
+                                ->getAllMetadata()
+        );
+        $schemaTool->createSchema(
+            $this->entityManager->getMetadataFactory()
+                                ->getAllMetadata()
+        );
     }
 
     /**
      * @Given I am logged with username :username and with password :password
      */
-    public function iAmLoggedWithUsernameAndWithPassword($username, $password)
-    {
+    public function iAmLoggedWithUsernameAndWithPassword(
+        $username,
+        $password
+    ) {
         $this->visit('/login');
-        $this->fillField('connection_username', $username);
-        $this->fillField('connection_password', $password);
+        $this->fillField(
+            'connection_username',
+            $username
+        );
+        $this->fillField(
+            'connection_password',
+            $password
+        );
         $this->pressButton('Valider');
     }
 
@@ -133,14 +144,18 @@ class DoctrineContext extends MinkContext implements Context
      */
     public function iHaveSavedTasks()
     {
+        $this->iLoadASpecificUser();
+
         $task1 = new Task(
             'Titre de la première tâche',
-            'Contenu de la première tâche'
+            'Contenu de la première tâche',
+            $this->user1
         );
 
         $task2 = new Task(
             'Titre de la seconde tâche',
-            'Contenu de la seconde tâche'
+            'Contenu de la seconde tâche',
+            $this->user1
         );
 
         $this->entityManager->persist($task1);
@@ -154,9 +169,12 @@ class DoctrineContext extends MinkContext implements Context
      */
     public function iHaveSavedOneTask()
     {
+        $this->iLoadASpecificUser();
+
         $task1 = new Task(
             'Titre de la première tâche',
-            'Contenu de la première tâche'
+            'Contenu de la première tâche',
+            $this->user1
         );
 
         $this->entityManager->persist($task1);

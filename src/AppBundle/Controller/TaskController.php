@@ -54,14 +54,25 @@ class TaskController extends Controller
             /** @var TaskDTO $datas */
             $datas = $form->getData();
 
+            $user = $this->get('security.token_storage')
+                         ->getToken()
+                         ->getUser();
+
             $em->persist(
                 $this->get('task_builder')
-                     ->build($datas)
+                     ->build(
+                         $datas,
+                         null,
+                         $user
+                     )
                      ->getTask()
             );
             $em->flush();
 
-            $this->addFlash('success', 'La tâche a été bien été ajoutée.');
+            $this->addFlash(
+                'success',
+                'La tâche a été bien été ajoutée.'
+            );
 
             return $this->redirectToRoute('task_list');
         }
@@ -113,13 +124,19 @@ class TaskController extends Controller
             $datas = $form->getData();
 
             $this->get('task_builder')
-                 ->build($datas, $task);
+                 ->build(
+                     $datas,
+                     $task
+                 );
 
             $this->getDoctrine()
                  ->getManager()
                  ->flush();
 
-            $this->addFlash('success', 'La tâche a bien été modifiée.');
+            $this->addFlash(
+                'success',
+                'La tâche a bien été modifiée.'
+            );
 
             return $this->redirectToRoute('task_list');
         }
@@ -197,7 +214,10 @@ class TaskController extends Controller
         $em->remove($task);
         $em->flush();
 
-        $this->addFlash('success', 'La tâche a bien été supprimée.');
+        $this->addFlash(
+            'success',
+            'La tâche a bien été supprimée.'
+        );
 
         return $this->redirectToRoute('task_list');
     }

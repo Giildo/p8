@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use AppBundle\Entity\Interfaces\TaskInterface;
+use AppBundle\Entity\Interfaces\UserInterface;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -54,14 +55,24 @@ class Task implements TaskInterface
      */
     private $done;
 
+    /**
+     * @var UserInterface
+     *
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\User", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $user;
+
     public function __construct(
         string $title,
-        string $content
+        string $content,
+        UserInterface $user
     ) {
         $this->createdAt = new Datetime();
         $this->done = false;
         $this->title = $title;
         $this->content = $content;
+        $this->user = $user;
     }
 
     /**
@@ -94,6 +105,14 @@ class Task implements TaskInterface
     public function getContent(): string
     {
         return $this->content;
+    }
+
+    /**
+     * @return UserInterface
+     */
+    public function getUser(): UserInterface
+    {
+        return $this->user;
     }
 
     /**

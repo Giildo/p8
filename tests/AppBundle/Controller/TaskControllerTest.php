@@ -26,10 +26,14 @@ class TaskControllerTest extends KernelTestCase
                                 ->get('doctrine.orm.entity_manager');
 
         $schemaTool = new SchemaTool($entityManager);
-        $schemaTool->dropSchema($entityManager->getMetadataFactory()
-                                              ->getAllMetadata());
-        $schemaTool->createSchema($entityManager->getMetadataFactory()
-                                                ->getAllMetadata());
+        $schemaTool->dropSchema(
+            $entityManager->getMetadataFactory()
+                          ->getAllMetadata()
+        );
+        $schemaTool->createSchema(
+            $entityManager->getMetadataFactory()
+                          ->getAllMetadata()
+        );
 
         $user = new User(
             'JohnDoe',
@@ -40,7 +44,8 @@ class TaskControllerTest extends KernelTestCase
 
         $task = new Task(
             'Titre',
-            'Contenu'
+            'Contenu',
+            $user
         );
 
         $entityManager->persist($user);
@@ -55,7 +60,10 @@ class TaskControllerTest extends KernelTestCase
 
     public function testListAction()
     {
-        self::assertInstanceOf(Response::class, $this->taskController->listAction());
+        self::assertInstanceOf(
+            Response::class,
+            $this->taskController->listAction()
+        );
     }
 
     public function testCreateActionReturnResponseIfFormIsNotSubmitted()
@@ -74,7 +82,10 @@ class TaskControllerTest extends KernelTestCase
 
         self::assertInstanceOf(
             Response::class,
-            $this->taskController->editAction(1, $request)
+            $this->taskController->editAction(
+                1,
+                $request
+            )
         );
     }
 
@@ -84,7 +95,10 @@ class TaskControllerTest extends KernelTestCase
 
         self::assertInstanceOf(
             Response::class,
-            $this->taskController->editAction(20, $request)
+            $this->taskController->editAction(
+                20,
+                $request
+            )
         );
     }
 

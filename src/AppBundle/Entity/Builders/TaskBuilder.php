@@ -5,6 +5,7 @@ namespace AppBundle\Entity\Builders;
 use AppBundle\Entity\Builders\Interfaces\TaskBuilderInterface;
 use AppBundle\Entity\DTO\Interfaces\TaskDTOInterface;
 use AppBundle\Entity\Interfaces\TaskInterface;
+use AppBundle\Entity\Interfaces\UserInterface;
 use AppBundle\Entity\Task;
 
 class TaskBuilder implements TaskBuilderInterface
@@ -16,12 +17,14 @@ class TaskBuilder implements TaskBuilderInterface
 
     public function build(
         TaskDTOInterface $dto,
-        ?TaskInterface $task = null
+        ?TaskInterface $task = null,
+        ?UserInterface $user = null
     ): TaskBuilderInterface {
         if (is_null($task)) {
             $this->task = new Task(
                 $dto->title,
-                $dto->content
+                $dto->content,
+                $user
             );
         } else {
             $task->setContent($dto->content);
