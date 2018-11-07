@@ -5,6 +5,7 @@ namespace AppBundle\Controller;
 use AppBundle\Form\ConnectionType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class SecurityController extends Controller
@@ -19,20 +20,24 @@ class SecurityController extends Controller
      */
     public function loginAction(): Response
     {
-        $authenticationUtils = $this->get('security.authentication_utils');
+        if (!$this->container->get('security.authorization_checker')->isGranted('ROLE_USER')) {
+            $authenticationUtils = $this->get('security.authentication_utils');
 
-        $error = $authenticationUtils->getLastAuthenticationError();
-        $lastUsername = $authenticationUtils->getLastUsername();
+            $error = $authenticationUtils->getLastAuthenticationError();
+            $lastUsername = $authenticationUtils->getLastUsername();
 
-        $form = $this->createForm(ConnectionType::class);
+            $form = $this->createForm(ConnectionType::class);
 
-        return $this->render(
-            'security/login.html.twig',
-            [
-                'last_username' => $lastUsername,
-                'error'         => $error,
-                'form'          => $form->createView(),
-            ]
-        );
+            return $this->render(
+                'security/login.html.twig',
+                [
+                    'last_username' => $lastUsername,
+                    'error'         => $error,
+                    'form'          => $form->createView(),
+                ]
+            );
+        }
+
+        return new RedirectResponse('/');
     }
 }

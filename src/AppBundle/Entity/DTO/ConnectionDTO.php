@@ -28,8 +28,8 @@ class ConnectionDTO implements ConnectionDTOInterface
      * @param string $password
      */
     public function __construct(
-        string $username,
-        string $password
+        ?string $username = null,
+        ?string $password = null
     ) {
         $this->username = $username;
         $this->password = $password;

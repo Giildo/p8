@@ -35,8 +35,8 @@ class RegistrationDTO implements RegistrationDTOInterface
 
     /**
      * @var string
-     *
-     * @Assert\NotNull(message="Le rôle de l'utilisateur doit être renseigné.")
+     *?
+     *  = null@Assert\NotNull(message="Le rôle de l'utilisateur doit être renseigné.")
      */
     public $roles = [];
 
@@ -60,10 +60,10 @@ class RegistrationDTO implements RegistrationDTOInterface
      * @param string $email
      */
     public function __construct(
-        string $username,
-        string $password,
-        string $roles,
-        string $email
+        ?string $username = null,
+        ?string $password = null,
+        ?string $roles = null,
+        ?string $email = null
     ) {
         $this->username = $username;
         $this->password = $password;

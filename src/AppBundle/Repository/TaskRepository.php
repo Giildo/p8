@@ -21,11 +21,11 @@ class TaskRepository extends EntityRepository
     /**
      * @param int $id
      *
-     * @return TaskInterface
+     * @return TaskInterface|null
      *
      * @throws NonUniqueResultException
      */
-    public function findOneTaskById(int $id): TaskInterface
+    public function findOneTaskById(int $id): ?TaskInterface
     {
         return $this->createQueryBuilder('t')
                     ->where('t.id = :id')

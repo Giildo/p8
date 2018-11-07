@@ -2,17 +2,21 @@
 
 namespace Tests\AppBundle\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use AppBundle\Controller\DefaultController;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\HttpFoundation\Response;
 
-class DefaultControllerTest extends WebTestCase
+class DefaultControllerTest extends KernelTestCase
 {
     public function testIndex()
     {
-        $client = static::createClient();
+        $kernel = self::bootKernel();
 
-        $crawler = $client->request('GET', '/');
+        $controller = new DefaultController();
+        $controller->setContainer(
+            $kernel->getContainer()
+        );
 
-        $this->assertEquals(302, $client->getResponse()->getStatusCode());
-        //$this->assertContains('Welcome to Symfony', $crawler->filter('#container h1')->text());
+        self::assertInstanceOf(Response::class, $controller->indexAction());
     }
 }

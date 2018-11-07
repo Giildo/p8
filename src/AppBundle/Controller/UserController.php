@@ -2,7 +2,6 @@
 
 namespace AppBundle\Controller;
 
-use AppBundle\Entity\Builders\UserBuilder;
 use AppBundle\Entity\DTO\RegistrationDTO;
 use AppBundle\Entity\User;
 use AppBundle\Form\RegistrationType;

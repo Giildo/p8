@@ -26,7 +26,7 @@ class TaskDTO implements TaskDTOInterface
      * @Assert\NotNull(message="Le contenu de la tâche doit être renseigné.")
      * @Assert\Length(
      *     min="5",
-     *     minMessage="Le contenu de la tâche doit comporter au moins {{ limit }} caractères."
+     *     minMessage="Le contenu de la tâche doit comporter au moins {{ limit }} caractères."
      * )
      */
     public $content;
@@ -37,8 +37,8 @@ class TaskDTO implements TaskDTOInterface
      * @param string $content
      */
     public function __construct(
-        string $title,
-        string $content
+        ?string $title = null,
+        ?string $content = null
     ) {
         $this->title = $title;
         $this->content = $content;
