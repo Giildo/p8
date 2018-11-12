@@ -10,35 +10,38 @@
             <div class="col-sm-4 col-lg-4 col-md-4">
                 <div class="thumbnail">
                     <div class="caption">
-                        <h4 class="pull-right">
-                            {% if task.isDone %}
-                                <span class="glyphicon glyphicon-ok"></span>
-                            {% else %}
-                                <span class="glyphicon glyphicon-remove"></span>
-                            {% endif %}
-                        </h4>
                         <h4>
                             <a href="{{ path('task_edit', {'id' : task.id }) }}">{{ task.title }}</a>
-                            {% if task.done %}
-                                <span class="material-icons" style="color: #28a745">check</span>
-                            {% endif %}
+                            <span class="pull-right">
+                                {% if task.done %}
+                                    <span class="material-icons" style="color: #28a745">check</span>
+                                {% else %}
+                                    <span class="material-icons" style="color: #dc3545">clear</span>
+                                {% endif %}
+                            </span>
                         </h4>
                         <p>{{ task.content }}</p>
-                        <p>Crée par : {{ task.user.username }}</p>
+                        {% if task.user is not null %}
+                            <p>Crée par : {{ task.user.username }}</p>
+                        {% else %}
+                            <p>Auteur anonyme</p>
+                        {% endif %}
                     </div>
                     <div>
                         <form action="{{ path('task_toggle', {'id' : task.id }) }}">
                             <button class="btn btn-success btn-sm pull-right">
                                 {% if not task.isDone %}
-                                    Marquer comme faite
+                                    Marquer comme terminée
                                 {% else %}
-                                    Marquer non terminée
+                                    Marquer comme non terminée
                                 {% endif %}
                             </button>
                         </form>
-                        <form action="{{ path('task_delete', {'id' : task.id }) }}">
-                            <button class="btn btn-danger btn-sm pull-right">Supprimer</button>
-                        </form>
+                        {% if app.user == task.user or (is_granted('ROLE_ADMIN') and task.user == null) %}
+                            <form action="{{ path('task_delete', {'id' : task.id }) }}">
+                                <button class="btn btn-danger btn-sm pull-right">Supprimer</button>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
             </div>
