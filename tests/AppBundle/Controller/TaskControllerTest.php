@@ -5,7 +5,7 @@ namespace Tests\AppBundle\Controller;
 use AppBundle\Controller\TaskController;
 use AppBundle\Entity\Builders\TaskBuilder;
 use AppBundle\Entity\DTO\TaskDTO;
-use AppBundle\Entity\Interfaces\TaskInterface;
+use AppBundle\Entity\Interfaces\UserInterface;
 use AppBundle\Entity\Task;
 use AppBundle\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Twig\Environment;
 use Twig_Error_Loader;
 use Twig_Error_Runtime;
@@ -46,9 +47,21 @@ class TaskControllerTest extends KernelTestCase
      */
     private $entityManager;
     /**
-     * @var TaskInterface
+     * @var AuthorizationCheckerInterface|MockObject
      */
-    private $task;
+    private $authorizationChecker;
+    /**
+     * @var UserInterface
+     */
+    private $user1;
+    /**
+     * @var UserInterface
+     */
+    private $user2;
+    /**
+     * @var TokenInterface|MockObject
+     */
+    private $token;
 
     /**
      * @throws ORMException
@@ -86,29 +99,47 @@ class TaskControllerTest extends KernelTestCase
                                 ->getAllMetadata()
         );
 
-        $user = new User(
+        $this->user1 = new User(
             'JohnDoe',
             'ROLE_ADMIN',
             'john@doe.fr'
         );
-        $user->setPassword('$2y$10$EIt8vwi9JcNZFp4tCJQWEuGHRXKTh96sp4nr69gp1qRsxXN364zVu');
+        $this->user1->setPassword('$2y$10$EIt8vwi9JcNZFp4tCJQWEuGHRXKTh96sp4nr69gp1qRsxXN364zVu');
 
-        $this->task = new Task(
+        $task1 = new Task(
             'Title',
             'Content',
-            $user
+            $this->user1
         );
 
-        $this->entityManager->persist($user);
-        $this->entityManager->persist($this->task);
+        $this->user2 = new User(
+            'JaneDoe',
+            'ROLE_USER',
+            'jane@doe.fr'
+        );
+        $this->user2->setPassword('$2y$10$EIt8vwi9JcNZFp4tCJQWEuGHRXKTh96sp4nr69gp1qRsxXN364zVu');
+        $task2 = new Task(
+            'Title 2',
+            'Content 2',
+            $this->user2
+        );
+
+        $task3 = new Task(
+            'Title 2',
+            'Content 2'
+        );
+
+        $this->entityManager->persist($this->user1);
+        $this->entityManager->persist($this->user2);
+        $this->entityManager->persist($task1);
+        $this->entityManager->persist($task2);
+        $this->entityManager->persist($task3);
         $this->entityManager->flush();
 
-        $token = $this->createMock(TokenInterface::class);
-        $token->method('getUser')
-              ->willReturn($user);
+        $this->token = $this->createMock(TokenInterface::class);
         $tokenStorage = $this->createMock(TokenStorageInterface::class);
         $tokenStorage->method('getToken')
-                     ->willReturn($token);
+                     ->willReturn($this->token);
 
         $taskBuilder = new TaskBuilder();
 
@@ -118,6 +149,8 @@ class TaskControllerTest extends KernelTestCase
 
         $flashBag = $this->createMock(FlashBagInterface::class);
 
+        $this->authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+
         $this->taskController = new TaskController(
             $twig,
             $formFactory,
@@ -125,7 +158,8 @@ class TaskControllerTest extends KernelTestCase
             $tokenStorage,
             $taskBuilder,
             $urlGenerator,
-            $flashBag
+            $flashBag,
+            $this->authorizationChecker
         );
     }
 
@@ -206,13 +240,16 @@ class TaskControllerTest extends KernelTestCase
         $this->form->method('getData')
                    ->willReturn($dto);
 
+        $this->token->method('getUser')
+                    ->willReturn($this->user1);
+
         self::assertInstanceOf(
             RedirectResponse::class,
             $this->taskController->createAction(new Request())
         );
 
         $task = $this->entityManager->getRepository(Task::class)
-                                    ->findOneTaskById(2);
+                                    ->findOneTaskById(4);
 
         self::assertEquals(
             'Title perso',
@@ -320,7 +357,10 @@ class TaskControllerTest extends KernelTestCase
         $task = $this->entityManager->getRepository(Task::class)
                                     ->findOneTaskById(1);
 
-        self::assertEquals('New title', $task->getTitle());
+        self::assertEquals(
+            'New title',
+            $task->getTitle()
+        );
     }
 
     /**
@@ -346,7 +386,7 @@ class TaskControllerTest extends KernelTestCase
     {
         self::assertInstanceOf(
             RedirectResponse::class,
-            $this->taskController->toggleTaskAction(10)
+            $this->taskController->toggleTaskAction(100)
         );
 
         $task = $this->entityManager->getRepository(Task::class)
@@ -368,14 +408,20 @@ class TaskControllerTest extends KernelTestCase
         $task = $this->entityManager->getRepository(Task::class)
                                     ->findOneTaskById(1);
 
-        self::assertEquals('Title', $task->getTitle());
+        self::assertEquals(
+            'Title',
+            $task->getTitle()
+        );
     }
 
     /**
      * @throws NonUniqueResultException
      */
-    public function testDeleteActionResponseReturnIfIdIsCorrect()
+    public function testDeleteActionRedirectResponseReturnIfTheUserHasNotTheRights()
     {
+        $this->token->method('getUser')
+                    ->willReturn($this->user2);
+
         self::assertInstanceOf(
             RedirectResponse::class,
             $this->taskController->deleteTaskAction(1)
@@ -383,6 +429,31 @@ class TaskControllerTest extends KernelTestCase
 
         $task = $this->entityManager->getRepository(Task::class)
                                     ->findOneTaskById(1);
+
+        self::assertEquals(
+            'Title',
+            $task->getTitle()
+        );
+    }
+
+    /**
+     * @throws NonUniqueResultException
+     */
+    public function testDeleteActionResponseReturnIfIdIsCorrect()
+    {
+        $this->token->method('getUser')
+                    ->willReturn($this->user1);
+
+        $this->authorizationChecker->method('isGranted')
+                                   ->willReturn(true);
+
+        self::assertInstanceOf(
+            RedirectResponse::class,
+            $this->taskController->deleteTaskAction(3)
+        );
+
+        $task = $this->entityManager->getRepository(Task::class)
+                                    ->findOneTaskById(3);
 
         self::assertNull($task);
     }

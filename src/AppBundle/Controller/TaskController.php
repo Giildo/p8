@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Twig\Environment;
 use Twig_Error_Loader;
 use Twig_Error_Runtime;
@@ -51,6 +52,10 @@ class TaskController
      * @var FlashBagInterface
      */
     private $flashBag;
+    /**
+     * @var AuthorizationCheckerInterface
+     */
+    private $authorizationChecker;
 
     /**
      * TaskController constructor.
@@ -61,6 +66,7 @@ class TaskController
      * @param TaskBuilderInterface $taskBuilder
      * @param UrlGeneratorInterface $urlGenerator
      * @param FlashBagInterface $flashBag
+     * @param AuthorizationCheckerInterface $authorizationChecker
      */
     public function __construct(
         Environment $twig,
@@ -69,7 +75,8 @@ class TaskController
         TokenStorageInterface $tokenStorage,
         TaskBuilderInterface $taskBuilder,
         UrlGeneratorInterface $urlGenerator,
-        FlashBagInterface $flashBag
+        FlashBagInterface $flashBag,
+        AuthorizationCheckerInterface $authorizationChecker
     ) {
         $this->twig = $twig;
         $this->formFactory = $formFactory;
@@ -78,6 +85,7 @@ class TaskController
         $this->taskBuilder = $taskBuilder;
         $this->urlGenerator = $urlGenerator;
         $this->flashBag = $flashBag;
+        $this->authorizationChecker = $authorizationChecker;
     }
 
     /**
@@ -315,12 +323,32 @@ class TaskController
             );
         }
 
-        $this->entityManager->remove($task);
-        $this->entityManager->flush();
+        $userConnected = $this->tokenStorage->getToken()
+                                            ->getUser();
+
+        if (
+            $task->getUser() === $userConnected ||
+            (
+                $task->getUser() === null &&
+                $this->authorizationChecker->isGranted('ROLE_ADMIN')
+            )
+        ) {
+            $this->entityManager->remove($task);
+            $this->entityManager->flush();
+
+            $this->flashBag->add(
+                'success',
+                'La tâche a été supprimée.'
+            );
+
+            return new RedirectResponse(
+                $this->urlGenerator->generate('task_list')
+            );
+        }
 
         $this->flashBag->add(
-            'success',
-            'La tâche a bien été supprimée.'
+            'error',
+            'Vous n\'avez pas les droits pour supprimer cette tâche.'
         );
 
         return new RedirectResponse(
