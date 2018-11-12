@@ -19,7 +19,10 @@ class UserRepository extends EntityRepository
     {
         return $this->createQueryBuilder('u')
                     ->where('u.username = :username')
-                    ->setParameter('username', $username)
+                    ->setParameter(
+                        'username',
+                        $username
+                    )
                     ->getQuery()
                     ->getOneOrNullResult();
     }
@@ -27,16 +30,29 @@ class UserRepository extends EntityRepository
     /**
      * @param int $id
      *
-     * @return UserInterface
+     * @return UserInterface|null
      *
      * @throws NonUniqueResultException
      */
-    public function findUserById(int $id): UserInterface
+    public function findUserById(int $id): ?UserInterface
     {
         return $this->createQueryBuilder('u')
                     ->where('u.id = :id')
-                    ->setParameter('id', $id)
+                    ->setParameter(
+                        'id',
+                        $id
+                    )
                     ->getQuery()
                     ->getOneOrNullResult();
+    }
+
+    /**
+     * @return UserInterface[]|array
+     */
+    public function findAllUsers(): array
+    {
+        return $this->createQueryBuilder('u')
+                    ->getQuery()
+                    ->getResult();
     }
 }

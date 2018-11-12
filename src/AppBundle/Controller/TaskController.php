@@ -2,18 +2,84 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\Builders\Interfaces\TaskBuilderInterface;
 use AppBundle\Entity\DTO\TaskDTO;
 use AppBundle\Entity\Task;
 use AppBundle\Form\TaskType;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NonUniqueResultException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Twig\Environment;
+use Twig_Error_Loader;
+use Twig_Error_Runtime;
+use Twig_Error_Syntax;
 
-class TaskController extends Controller
+class TaskController
 {
+    /**
+     * @var Environment
+     */
+    private $twig;
+    /**
+     * @var FormFactoryInterface
+     */
+    private $formFactory;
+    /**
+     * @var EntityManagerInterface
+     */
+    private $entityManager;
+    /**
+     * @var TokenStorageInterface
+     */
+    private $tokenStorage;
+    /**
+     * @var TaskBuilderInterface
+     */
+    private $taskBuilder;
+    /**
+     * @var UrlGeneratorInterface
+     */
+    private $urlGenerator;
+    /**
+     * @var FlashBagInterface
+     */
+    private $flashBag;
+
+    /**
+     * TaskController constructor.
+     * @param Environment $twig
+     * @param FormFactoryInterface $formFactory
+     * @param EntityManagerInterface $entityManager
+     * @param TokenStorageInterface $tokenStorage
+     * @param TaskBuilderInterface $taskBuilder
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param FlashBagInterface $flashBag
+     */
+    public function __construct(
+        Environment $twig,
+        FormFactoryInterface $formFactory,
+        EntityManagerInterface $entityManager,
+        TokenStorageInterface $tokenStorage,
+        TaskBuilderInterface $taskBuilder,
+        UrlGeneratorInterface $urlGenerator,
+        FlashBagInterface $flashBag
+    ) {
+        $this->twig = $twig;
+        $this->formFactory = $formFactory;
+        $this->entityManager = $entityManager;
+        $this->tokenStorage = $tokenStorage;
+        $this->taskBuilder = $taskBuilder;
+        $this->urlGenerator = $urlGenerator;
+        $this->flashBag = $flashBag;
+    }
+
     /**
      * @Route(
      *     path="/tasks",
@@ -21,16 +87,21 @@ class TaskController extends Controller
      * )
      *
      * @return Response
+     *
+     * @throws Twig_Error_Loader
+     * @throws Twig_Error_Runtime
+     * @throws Twig_Error_Syntax
      */
     public function listAction(): Response
     {
-        return $this->render(
-            'task/list.html.twig',
-            [
-                'tasks' => $this->getDoctrine()
-                                ->getRepository(Task::class)
-                                ->findAllTasks(),
-            ]
+        return new Response(
+            $this->twig->render(
+                'task/list.html.twig',
+                [
+                    'tasks' => $this->entityManager->getRepository(Task::class)
+                                                   ->findAllTasks(),
+                ]
+            )
         );
     }
 
@@ -42,46 +113,50 @@ class TaskController extends Controller
      * @param Request $request
      *
      * @return Response
+     *
+     * @throws Twig_Error_Loader
+     * @throws Twig_Error_Runtime
+     * @throws Twig_Error_Syntax
      */
     public function createAction(Request $request): Response
     {
-        $form = $this->createForm(TaskType::class)
-                     ->handleRequest($request);
+        $form = $this->formFactory->create(TaskType::class)
+                                  ->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()
-                       ->getManager();
             /** @var TaskDTO $datas */
             $datas = $form->getData();
 
-            $user = $this->get('security.token_storage')
-                         ->getToken()
-                         ->getUser();
+            $user = $this->tokenStorage->getToken()
+                                       ->getUser();
 
-            $em->persist(
-                $this->get('task_builder')
-                     ->build(
-                         $datas,
-                         null,
-                         $user
-                     )
-                     ->getTask()
+            $this->entityManager->persist(
+                $this->taskBuilder->build(
+                    $datas,
+                    null,
+                    $user
+                )
+                                  ->getTask()
             );
-            $em->flush();
+            $this->entityManager->flush();
 
-            $this->addFlash(
+            $this->flashBag->add(
                 'success',
                 'La tâche a été bien été ajoutée.'
             );
 
-            return $this->redirectToRoute('task_list');
+            return new RedirectResponse(
+                $this->urlGenerator->generate('task_list')
+            );
         }
 
-        return $this->render(
-            'task/create.html.twig',
-            [
-                'form' => $form->createView()
-            ]
+        return new Response(
+            $this->twig->render(
+                'task/create.html.twig',
+                [
+                    'form' => $form->createView()
+                ]
+            )
         );
     }
 
@@ -97,56 +172,66 @@ class TaskController extends Controller
      * @return Response
      *
      * @throws NonUniqueResultException
+     * @throws Twig_Error_Loader
+     * @throws Twig_Error_Runtime
+     * @throws Twig_Error_Syntax
      */
     public function editAction(
         int $id,
         Request $request
     ): Response {
-        $task = $this->getDoctrine()
-                     ->getRepository(Task::class)
-                     ->findOneTaskById($id);
+        $task = $this->entityManager->getRepository(Task::class)
+                                    ->findOneTaskById($id);
 
         if (is_null($task)) {
-            return new RedirectResponse('/tasks');
+            $this->flashBag->add(
+                'error',
+                'La tâche demandée n\'existe pas.'
+            );
+
+            return new RedirectResponse(
+                $this->urlGenerator->generate('task_list')
+            );
         }
 
-        $form = $this->createForm(
+        $form = $this->formFactory->create(
             TaskType::class,
             new TaskDTO(
                 $task->getTitle(),
                 $task->getContent()
             )
-        );
-        $form->handleRequest($request);
+        )
+                                  ->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             /** @var TaskDTO $datas */
             $datas = $form->getData();
 
-            $this->get('task_builder')
-                 ->build(
-                     $datas,
-                     $task
-                 );
+            $this->taskBuilder->build(
+                $datas,
+                $task
+            );
 
-            $this->getDoctrine()
-                 ->getManager()
-                 ->flush();
+            $this->entityManager->flush();
 
-            $this->addFlash(
+            $this->flashBag->add(
                 'success',
                 'La tâche a bien été modifiée.'
             );
 
-            return $this->redirectToRoute('task_list');
+            return new RedirectResponse(
+                $this->urlGenerator->generate('task_list')
+            );
         }
 
-        return $this->render(
-            'task/edit.html.twig',
-            [
-                'form' => $form->createView(),
-                'task' => $task,
-            ]
+        return new Response(
+            $this->twig->render(
+                'task/edit.html.twig',
+                [
+                    'form' => $form->createView(),
+                    'task' => $task,
+                ]
+            )
         );
     }
 
@@ -164,14 +249,23 @@ class TaskController extends Controller
      */
     public function toggleTaskAction(int $id): Response
     {
-        $task = $this->getDoctrine()
-                     ->getRepository(Task::class)
-                     ->findOneTaskById($id);
+        $task = $this->entityManager->getRepository(Task::class)
+                                    ->findOneTaskById($id);
+
+        if (is_null($task)) {
+            $this->flashBag->add(
+                'error',
+                'La tâche demandée n\'existe pas.'
+            );
+
+            return new RedirectResponse(
+                $this->urlGenerator->generate('task_list')
+            );
+        }
+
         $task->toggle();
 
-        $this->getDoctrine()
-             ->getManager()
-             ->flush();
+        $this->entityManager->flush();
 
         $message = 'non terminée';
 
@@ -179,7 +273,7 @@ class TaskController extends Controller
             $message = 'terminée';
         }
 
-        $this->addFlash(
+        $this->flashBag->add(
             'success',
             sprintf(
                 'La tâche "%1$s" a bien été marquée comme %2$s.',
@@ -188,7 +282,9 @@ class TaskController extends Controller
             )
         );
 
-        return $this->redirectToRoute('task_list');
+        return new RedirectResponse(
+            $this->urlGenerator->generate('task_list')
+        );
     }
 
     /**
@@ -205,20 +301,30 @@ class TaskController extends Controller
      */
     public function deleteTaskAction(int $id): Response
     {
-        $task = $this->getDoctrine()
-                     ->getRepository(Task::class)
-                     ->findOneTaskById($id);
+        $task = $this->entityManager->getRepository(Task::class)
+                                    ->findOneTaskById($id);
 
-        $em = $this->getDoctrine()
-                   ->getManager();
-        $em->remove($task);
-        $em->flush();
+        if (is_null($task)) {
+            $this->flashBag->add(
+                'error',
+                'La tâche demandée n\'existe pas.'
+            );
 
-        $this->addFlash(
+            return new RedirectResponse(
+                $this->urlGenerator->generate('task_list')
+            );
+        }
+
+        $this->entityManager->remove($task);
+        $this->entityManager->flush();
+
+        $this->flashBag->add(
             'success',
             'La tâche a bien été supprimée.'
         );
 
-        return $this->redirectToRoute('task_list');
+        return new RedirectResponse(
+            $this->urlGenerator->generate('task_list')
+        );
     }
 }
