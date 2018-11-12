@@ -29,7 +29,7 @@ interface TaskInterface
     /**
      * @return UserInterface
      */
-    public function getUser(): UserInterface;
+    public function getUser(): ?UserInterface;
 
     /**
      * @return bool

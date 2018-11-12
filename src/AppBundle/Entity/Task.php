@@ -59,14 +59,13 @@ class Task implements TaskInterface
      * @var UserInterface
      *
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\User", cascade={"persist"})
-     * @ORM\JoinColumn(nullable=false)
      */
     private $user;
 
     public function __construct(
         string $title,
         string $content,
-        UserInterface $user
+        ?UserInterface $user = null
     ) {
         $this->createdAt = new Datetime();
         $this->done = false;
@@ -108,9 +107,9 @@ class Task implements TaskInterface
     }
 
     /**
-     * @return UserInterface
+     * @return UserInterface|null
      */
-    public function getUser(): UserInterface
+    public function getUser(): ?UserInterface
     {
         return $this->user;
     }
