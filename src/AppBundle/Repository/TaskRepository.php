@@ -13,9 +13,10 @@ class TaskRepository extends EntityRepository
      */
     public function findAllTasks(): array
     {
-        return $this->createQueryBuilder('t')
-                    ->getQuery()
-                    ->getResult();
+        return $this->_em->createQuery("SELECT t FROM AppBundle\Entity\Task t")
+                         ->useResultCache(true)
+                         ->setResultCacheLifetime(60)
+                         ->getResult();
     }
 
     /**
@@ -29,7 +30,10 @@ class TaskRepository extends EntityRepository
     {
         return $this->createQueryBuilder('t')
                     ->where('t.id = :id')
-                    ->setParameter('id', $id)
+                    ->setParameter(
+                        'id',
+                        $id
+                    )
                     ->getQuery()
                     ->getOneOrNullResult();
     }
